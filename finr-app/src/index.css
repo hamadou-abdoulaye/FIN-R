@@ -1,0 +1,59 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+  --purple-dark: #3C3489;
+  --purple-mid: #7F77DD;
+  --white: #FFFFFF;
+  --dark: #1A1A2E;
+  --gray: #64748B;
+  --gray-light: #94A3B8;
+  --light-bg: #F1F5F9;
+  --green: #0F6E56;
+  --green-mid: #1D9E75;
+  --green-bg: #E1F5EE;
+  --green-light: #D1FAE5;
+  --amber: #B45309;
+  --amber-mid: #F59E0B;
+  --amber-bg: #FEF3C7;
+  --amber-light: #FDE68A;
+  --red: #991B1B;
+  --red-mid: #DC2626;
+  --red-bg: #FEE2E2;
+  --red-light: #FECACA;
+  --blue: #1E40AF;
+  --blue-mid: #3B82F6;
+  --blue-bg: #DBEAFE;
+  --blue-light: #BFDBFE;
+  --border: #E2E8F0;
+  --sidebar-width: 240px;
+  --header-height: 64px;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-xl: 0 10px 40px rgba(0,0,0,0.12);
+}
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 25%, #F1F5F9 50%, #F8FAFC 75%, #EEF2FF 100%); color: var(--dark); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, textarea { font-family: inherit; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  :root { --sidebar-width: 200px; }
+  .dashboard-grid { grid-template-columns: 1fr 1fr !important; }
+  .stats-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 768px) {
+  :root { --sidebar-width: 0px; }
+  .main-content { margin-left: 0 !important; padding: 16px !important; }
+  .card-grid { grid-template-columns: 1fr !important; }
+  .metric-cards { flex-direction: column !important; }
+  .workspace-layout { flex-direction: column !important; }
+  .workspace-sidebar { width: 100% !important; borderLeft: none !important; borderTop: '1px solid var(--border)' !important; }
+  .login-split { flex-direction: column !important; }
+  .login-left { display: none !important; }
+  .login-right { width: 100% !important; }
+}

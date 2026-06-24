@@ -1,0 +1,59 @@
+# ── Build stage ──────────────────────────────────────────────────────────────
+FROM composer:2.7 AS composer
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install \
+      --no-dev \
+      --no-scripts \
+      --no-interaction \
+      --prefer-dist \
+      --optimize-autoloader
+
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM php:8.3-fpm-alpine
+
+# System deps
+RUN apk add --no-cache \
+      libpq-dev \
+      curl \
+      zip \
+      unzip \
+    && docker-php-ext-install \
+      pdo \
+      pdo_pgsql \
+      pcntl \
+      bcmath \
+    && docker-php-ext-enable pdo_pgsql
+
+WORKDIR /var/www/html
+
+# Copy vendor from build stage
+COPY --from=composer /app/vendor ./vendor
+
+# Copy app source
+COPY . .
+
+# Permissions
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Entrypoint: run migrations + start php-fpm
+COPY --chmod=755 <<'ENTRYPOINT' /entrypoint.sh
+#!/bin/sh
+set -e
+echo "→ Optimizing..."
+php artisan config:cache
+php artisan route:cache
+php artisan event:cache
+
+echo "→ Running migrations..."
+php artisan migrate --force --seed
+
+echo "→ Starting PHP-FPM..."
+exec php-fpm
+ENTRYPOINT
+
+EXPOSE 8000
+
+ENTRYPOINT ["/entrypoint.sh"]

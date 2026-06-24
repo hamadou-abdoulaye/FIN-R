@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+vendor/
+venv/
+__pycache__/
+*.pyc
+.env
+.env.local
+.env.backup
+
+# Laravel
+finr-api/storage/*.key
+finr-api/storage/logs/*.log
+finr-api/storage/framework/cache/*
+finr-api/storage/framework/views/*
+finr-api/storage/framework/sessions/*
+finr-api/bootstrap/cache/*.php
+
+# React
+finr-app/build/
+finr-app/dist/
+
+# Python
+finr-nlp/__pycache__/
+finr-nlp/*.pyc
+finr-nlp/.env
+
+# Docker
+finr-docker/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.gitattributes
+
+# Misc
+*.log
+*.tmp
+*.temp
