@@ -1,17 +1,17 @@
 services:
   - type: web
     name: finr-api
-    runtime: php
+    runtime: docker
     plan: free
-    buildCommand: cd finr-api && composer install --no-dev --optimize-autoloader
-    startCommand: cd finr-api && vendor/bin/heroku-php-nginx public/
+    buildCommand: docker build -f finr-docker/Dockerfile.api -t finr-api .
+    startCommand: docker run -p 10000:10000 finr-api
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: false
       - key: APP_KEY
-        generateBase64: true
+        generateValue: true
       - key: APP_URL
         value: https://finr-api.onrender.com
       - key: DB_CONNECTION
