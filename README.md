@@ -256,15 +256,39 @@ php artisan view:cache
 
 ## 📋 Guide de déploiement ULTRA-SIMPLIFIÉ
 
-### Étape 1 : Base de données MySQL sur Aiven (5 minutes)
+### Étape 1 : Migrer votre base de données MySQL locale vers Aiven (5 minutes)
 
-1. **Aller sur [aiven.io](https://aiven.io)** et créer un compte gratuit
-2. **Créer un service MySQL :**
+**Si vous avez déjà une base de données MySQL locale** (comme la vôtre avec `finr`), suivez ces étapes :
+
+1. **Exporter votre base de données locale :**
+
+```bash
+# Dans le terminal, depuis votre installation MySQL locale
+mysqldump -u root -p finr > finr_backup.sql
+```
+
+2. **Créer un compte sur [aiven.io](https://aiven.io)** et créer un service MySQL :
    - "Create service" → "MySQL" → Plan "Free"
    - Noter le **Service URI** (ex: `mysql://avnadmin:password@host:3306/defaultdb`)
-3. **Créer la base de données :**
-   - Aller dans "Query" sur Aiven
-   - Exécuter : `CREATE DATABASE finr_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+
+3. **Importer votre base de données vers Aiven :**
+
+```bash
+# Installer le client Aiven (si pas déjà fait)
+# Windows : télécharger depuis aiven.io/docs/tools/avncli
+
+# Ou utiliser mysql directement avec les credentials Aiven
+mysql -h host.aivencloud.com -u avnadmin -p finr_db < finr_backup.sql
+```
+
+4. **Vérifier l'importation :**
+   - Aller dans Aiven → "Query"
+   - Exécuter : `SHOW TABLES;`
+   - Vous devriez voir toutes vos tables (users, engineers, research_sessions, etc.)
+
+**Si vous n'avez pas de base de données existante**, créez-en une neuve sur Aiven :
+- Aller dans "Query" sur Aiven
+- Exécuter : `CREATE DATABASE finr_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
 
 ### Étape 2 : Déployer le backend sur Render (5 minutes)
 
