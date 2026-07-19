@@ -269,16 +269,14 @@ mysqldump -u root -p finr > finr_backup.sql
 
 2. **Créer un compte sur [aiven.io](https://aiven.io)** et créer un service MySQL :
    - "Create service" → "MySQL" → Plan "Free"
-   - Noter le **Service URI** (ex: `mysql://avnadmin:password@host:3306/defaultdb`)
+   - **Noter le Service URI complet** (ex: `mysql://avnadmin:abc123@finr-db-1234.aivencloud.com:3306/defaultdb`)
+   - **IMPORTANT** : Le host ressemble à `finr-db-XXXX.aivencloud.com` (pas juste `host.aivencloud.com`)
 
 3. **Importer votre base de données vers Aiven :**
 
 ```bash
-# Installer le client Aiven (si pas déjà fait)
-# Windows : télécharger depuis aiven.io/docs/tools/avncli
-
-# Ou utiliser mysql directement avec les credentials Aiven
-mysql -h host.aivencloud.com -u avnadmin -p finr_db < finr_backup.sql
+# Remplacer VOTRE_HOST par le host depuis Aiven (ex: finr-db-1234.aivencloud.com)
+mysql -h VOTRE_HOST.aivencloud.com -u avnadmin -p finr_db < finr_backup.sql
 ```
 
 4. **Vérifier l'importation :**
