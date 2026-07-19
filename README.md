@@ -240,73 +240,334 @@ php artisan view:cache
 
 ### Option 0 : Hébergement GRATUIT (pour tests et démonstration)
 
-#### 🎯 Meilleure option : Render + Vercel/Netlify
+#### 🎯 Meilleure option : Render + Vercel
 
-**Backend Laravel sur Render (Gratuit)**
-- **Limites** : 512 MB RAM, 100 GB bandwidth/mois, base de données PostgreSQL 90 jours gratuits
-- **Avantages** : SSL automatique, déploiement Git automatique, PHP 8.2 supporté
-- **Inconvénients** : Base de données gratuite limitée dans le temps
+**Stack recommandée :**
+- **Backend** : Laravel sur Render (Gratuit)
+- **Frontend** : React sur Vercel (Gratuit)
+- **Base de données** : PostgreSQL sur Render (Gratuit 90 jours)
 
-**Frontend React sur Vercel ou Netlify (Gratuit)**
-- **Limites** : 100 GB bandwidth/mois, illimité pour les projets personnels
-- **Avantages** : CDN mondial, SSL automatique, déploiement Git automatique
-- **Parfait pour** : Le build statique React
+**Limites :**
+- Render Free : 512 MB RAM, 100 GB bandwidth/mois, mise en veille après 15 min d'inactivité
+- Vercel Free : 100 GB bandwidth/mois, illimité pour projets personnels
+- PostgreSQL : Gratuit 90 jours, puis 7$/mois
 
-**Étapes de déploiement gratuit :**
+---
 
-1. **Backend sur Render :**
+## 📋 Guide de déploiement sur Render (Étape par étape)
 
-```bash
-# 1. Créer un compte sur render.com
-# 2. Créer un nouveau "Web Service"
-# 3. Connecter votre repo GitHub : hamadou-abdoulaye/FIN-R
-# 4. Configuration :
-#    - Runtime : PHP
-#    - Build Command : composer install --no-dev --optimize-autoloader
-#    - Start Command : vendor/bin/heroku-php-nginx public/
-#    - Plan : Free
-```
+### Étape 1 : Préparer le backend Laravel
 
-5. **Ajouter une base de données PostgreSQL sur Render :**
-   - Créer un "PostgreSQL" dans Render
-   - Noter les credentials (host, port, database, username, password)
-
-6. **Configurer les variables d'environnement dans Render :**
-```env
-APP_ENV=production
-APP_DEBUG=false
-APP_KEY=base64:GENERATED_KEY
-APP_URL=https://votre-app.onrender.com
-
-DB_CONNECTION=pgsql
-DB_HOST=votre-db.onrender.com
-DB_PORT=5432
-DB_DATABASE=nom_db
-DB_USERNAME=utilisateur
-DB_PASSWORD=mot_de_passe
-
-SESSION_DRIVER=database
-SESSION_LIFETIME=120
-```
-
-7. **Frontend sur Vercel :**
+1. **Générer la clé d'application Laravel :**
 
 ```bash
-# 1. Créer un compte sur vercel.com
-# 2. Importer le projet finr-app
-# 3. Vercel détecte automatiquement React
-# 4. Ajouter les variables d'environnement :
-REACT_APP_API_URL=https://votre-app.onrender.com/api
-REACT_APP_REVERB_KEY=your-key
-REACT_APP_REVERB_HOST=localhost
-REACT_APP_REVERB_PORT=8080
-# 5. Déployer
+cd finr-api
+php artisan key:generate --show
 ```
 
-**Résultat** :
-- Frontend : `https://finr-app.vercel.app`
-- Backend : `https://finr-api.onrender.com`
-- Base de données : PostgreSQL sur Render (gratuit 90 jours)
+Copiez la clé générée (elle commence par `base64:`), vous en aurez besoin plus tard.
+
+2. **Créer un fichier `render.yaml` à la racine de `finr-api/` :**
+
+```yaml
+services:
+  - type: web
+    name: finr-api
+    runtime: php
+    plan: free
+    buildCommand: composer install --no-dev --optimize-autoloader
+    startCommand: vendor/bin/heroku-php-nginx public/
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateBase64: true
+      - key: APP_URL
+        value: https://finr-api.onrender.com
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: finr-db
+          property: host
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_DATABASE
+        fromDatabase:
+          name: finr-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: finr-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: finr-db
+          property: password
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://finr-app.vercel.app
+
+databases:
+  - name: finr-db
+    plan: free
+    databaseName: finr
+    user: finr_user
+```
+
+3. **Ajouter un fichier `finr-api/init.sql` pour les migrations :**
+
+```sql
+-- Ce fichier sera exécuté automatiquement par Render
+-- Les migrations Laravel seront exécutées via le build command
+```
+
+### Étape 2 : Configurer le frontend React
+
+1. **Mettre à jour `finr-app/src/lib/api.ts` :**
+
+```typescript
+const API_URL = process.env.REACT_APP_API_URL || 'https://finr-api.onrender.com/api';
+
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+});
+```
+
+2. **Créer un fichier `vercel.json` à la racine de `finr-app/` :**
+
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "framework": "create-react-app",
+  "env": {
+    "REACT_APP_API_URL": "https://finr-api.onrender.com/api"
+  }
+}
+```
+
+### Étape 3 : Déployer sur Render
+
+1. **Créer un compte sur [Render.com](https://render.com)**
+
+2. **Connecter votre compte GitHub :**
+   - Aller dans Settings → GitHub
+   - Autoriser Render à accéder à vos repositories
+
+3. **Déployer le backend :**
+   - Cliquer sur "New +" → "Blueprint"
+   - Sélectionner votre repository `FIN-R`
+   - Render détectera automatiquement le fichier `render.yaml`
+   - Cliquer sur "Apply"
+   - Render va :
+     - Créer la base de données PostgreSQL
+     - Installer les dépendances Composer
+     - Exécuter les migrations
+     - Déployer l'application
+
+4. **Attendre le déploiement** (5-10 minutes)
+
+5. **Récupérer l'URL du backend :**
+   - Elle sera de la forme : `https://finr-api.onrender.com`
+
+### Étape 4 : Déployer le frontend sur Vercel
+
+1. **Créer un compte sur [Vercel.com](https://vercel.com)**
+
+2. **Installer Vercel CLI (optionnel) :**
+
+```bash
+npm i -g vercel
+```
+
+3. **Déployer depuis Vercel Dashboard :**
+   - Cliquer sur "Add New..." → "Project"
+   - Importer votre repository GitHub `FIN-R`
+   - Sélectionner le dossier `finr-app` comme racine du projet
+   - Vercel détectera automatiquement React
+   - Ajouter les variables d'environnement :
+     - `REACT_APP_API_URL` = `https://finr-api.onrender.com/api`
+   - Cliquer sur "Deploy"
+
+4. **Attendre le déploiement** (2-3 minutes)
+
+5. **Récupérer l'URL du frontend :**
+   - Elle sera de la forme : `https://finr-app.vercel.app`
+
+### Étape 5 : Configurer CORS sur le backend
+
+1. **Aller sur Render → finr-api → Environment**
+2. **Ajouter la variable d'environnement :**
+   - Key : `CORS_ALLOWED_ORIGINS`
+   - Value : `https://finr-app.vercel.app`
+
+3. **Redéployer le backend** (Render le fait automatiquement)
+
+### Étape 6 : Tester l'application
+
+1. **Ouvrir le frontend :** `https://finr-app.vercel.app`
+2. **Tester la connexion** avec les comptes de test :
+   - Ingénieur : `engineer@test.com` / `password`
+   - Chercheur : `researcher@test.com` / `password`
+
+### Étape 7 : Configurer un nom de domaine personnalisé (optionnel)
+
+**Pour le backend (Render) :**
+1. Aller dans Render → finr-api → Settings → Custom Domains
+2. Ajouter votre domaine : `api.votre-domaine.com`
+3. Configurer les DNS chez votre registrar :
+   - Type : CNAME
+   - Name : api
+   - Value : finr-api.onrender.com
+
+**Pour le frontend (Vercel) :**
+1. Aller dans Vercel → finr-app → Settings → Domains
+2. Ajouter votre domaine : `votre-domaine.com`
+3. Configurer les DNS :
+   - Type : A
+   - Name : @
+   - Value : 76.76.21.21 (IP Vercel)
+   - Type : CNAME
+   - Name : www
+   - Value : cname.vercel-dns.com
+
+### Étape 8 : Activer les notifications (optionnel)
+
+Pour les notifications en temps réel avec Reverb :
+
+1. **Ajouter Reverb sur Render :**
+   - Créer un nouveau "Web Service"
+   - Runtime : PHP
+   - Build Command : `composer install --no-dev`
+   - Start Command : `php artisan reverb:start --host=0.0.0.0 --port=8080`
+   - Plan : Free
+
+2. **Configurer les variables d'environnement :**
+   - `REVERB_APP_ID` : `finr-app`
+   - `REVERB_APP_KEY` : `finr-key` (générer un nouveau)
+   - `REVERB_APP_SECRET` : `finr-secret` (générer un nouveau)
+
+3. **Mettre à jour le frontend :**
+   - Ajouter dans Vercel :
+     - `REACT_APP_REVERB_HOST` = `finr-reverb.onrender.com`
+     - `REACT_APP_REVERB_PORT` = `8080`
+     - `REACT_APP_REVERB_KEY` = `finr-key`
+
+---
+
+## 🔧 Dépannage
+
+### Problème : Le backend ne démarre pas
+
+**Solution :**
+1. Vérifier les logs dans Render Dashboard
+2. Vérifier que `APP_KEY` est défini
+3. Vérifier que les migrations ont été exécutées
+
+### Problème : Erreur CORS
+
+**Solution :**
+1. Vérifier que `CORS_ALLOWED_ORIGINS` contient l'URL du frontend
+2. Redéployer le backend après modification
+
+### Problème : La base de données ne se connecte pas
+
+**Solution :**
+1. Vérifier les credentials dans Render Dashboard
+2. Vérifier que `DB_CONNECTION=pgsql` (pas mysql)
+3. Vérifier que les migrations ont été exécutées
+
+### Problème : Le frontend ne peut pas appeler l'API
+
+**Solution :**
+1. Vérifier `REACT_APP_API_URL` dans Vercel
+2. Vérifier que l'URL se termine par `/api`
+3. Vérifier CORS sur le backend
+
+---
+
+## 📊 Monitoring et maintenance
+
+### Surveiller l'application
+
+**Render :**
+- Logs en temps réel dans le Dashboard
+- Métriques : CPU, RAM, Bandwidth
+- Alertes par email en cas d'erreur
+
+**Vercel :**
+- Analytics intégrés
+- Logs de déploiement
+- Performance monitoring
+
+### Mettre à jour l'application
+
+**Backend :**
+- Push sur GitHub → Render redéploie automatiquement
+- Ou cliquer sur "Manual Deploy" dans Render Dashboard
+
+**Frontend :**
+- Push sur GitHub → Vercel redéploie automatiquement
+- Ou cliquer sur "Deploy" dans Vercel Dashboard
+
+### Sauvegardes
+
+**Base de données PostgreSQL :**
+- Render fait des sauvegardes automatiques (plan Free)
+- Pour exporter : `pg_dump` via Render Shell
+
+**Fichiers uploadés :**
+- Render stocke dans un volume persistant
+- Télécharger via Render Dashboard ou SFTP
+
+---
+
+## 💰 Coûts à long terme
+
+**Phase 1 : Gratuit (0$/mois)**
+- Render Free + Vercel Free
+- Parfait pour : Tests, démonstration, MVP
+- Limitations : Mise en veille après 15 min d'inactivité
+
+**Phase 2 : Croissance (7$/mois)**
+- Render Starter (7$/mois) : Pas de mise en veille, plus de ressources
+- Vercel Free suffit généralement
+- PostgreSQL sur Render : 7$/mois (après 90 jours)
+
+**Phase 3 : Production (25+/mois)**
+- Render Standard (25$/mois) : Performance professionnelle
+- Vercel Pro (20$/mois) : Analytics avancés
+- Base de données managée : 15-30$/mois
+
+---
+
+## ✅ Checklist de déploiement
+
+- [ ] Compte Render créé
+- [ ] Compte Vercel créé
+- [ ] Backend déployé sur Render
+- [ ] Base de données PostgreSQL créée
+- [ ] Migrations exécutées
+- [ ] Frontend déployé sur Vercel
+- [ ] CORS configuré
+- [ ] Application testée
+- [ ] Nom de domaine configuré (optionnel)
+- [ ] SSL activé (automatique)
+- [ ] Monitoring activé
+
+---
+
+**Félicitations !** Votre application FIN-R est maintenant en ligne et accessible gratuitement !
 
 #### Alternative : Fly.io (Gratuit pour petits projets)
 
