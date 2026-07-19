@@ -254,171 +254,59 @@ php artisan view:cache
 
 ---
 
-## 📋 Guide de déploiement sur Render (Étape par étape)
+## 📋 Guide de déploiement ULTRA-SIMPLIFIÉ
 
-### Étape 1 : Préparer le backend Laravel
+### Étape 1 : Base de données MySQL sur Aiven (5 minutes)
 
-1. **Générer la clé d'application Laravel :**
+1. **Aller sur [aiven.io](https://aiven.io)** et créer un compte gratuit
+2. **Créer un service MySQL :**
+   - "Create service" → "MySQL" → Plan "Free"
+   - Noter le **Service URI** (ex: `mysql://avnadmin:password@host:3306/defaultdb`)
+3. **Créer la base de données :**
+   - Aller dans "Query" sur Aiven
+   - Exécuter : `CREATE DATABASE finr_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
 
-```bash
-cd finr-api
-php artisan key:generate --show
-```
+### Étape 2 : Déployer le backend sur Render (5 minutes)
 
-Copiez la clé générée (elle commence par `base64:`), vous en aurez besoin plus tard.
+1. **Aller sur [render.com](https://render.com)** et créer un compte
+2. **"New +" → "Static Site"**
+3. **Connecter votre repo GitHub** : `hamadou-abdoulaye/FIN-R`
+4. **Configurer :**
+   - **Name** : `finr-api`
+   - **Build Command** : `cd finr-api && composer install --no-dev --optimize-autoloader && php artisan key:generate && php artisan migrate --force`
+   - **Publish Directory** : `finr-api/public`
+5. **Ajouter les variables d'environnement :**
+   - `APP_ENV` = `production`
+   - `APP_DEBUG` = `false`
+   - `APP_KEY` = (générer avec `php artisan key:generate --show` en local)
+   - `APP_URL` = `https://finr-api.onrender.com`
+   - `DB_CONNECTION` = `mysql`
+   - `DB_HOST` = (host depuis Aiven)
+   - `DB_PORT` = `3306`
+   - `DB_DATABASE` = `finr_db`
+   - `DB_USERNAME` = `avnadmin`
+   - `DB_PASSWORD` = (password depuis Aiven)
+   - `SESSION_DRIVER` = `database`
+   - `CORS_ALLOWED_ORIGINS` = `https://finr-app.vercel.app`
+6. **"Create Static Site"** et attendre 3-5 minutes
 
-2. **Créer un fichier `render.yaml` à la racine de `finr-api/` :**
+### Étape 3 : Déployer le frontend sur Vercel (3 minutes)
 
-```yaml
-services:
-  - type: web
-    name: finr-api
-    runtime: php
-    plan: free
-    buildCommand: composer install --no-dev --optimize-autoloader
-    startCommand: vendor/bin/heroku-php-nginx public/
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: false
-      - key: APP_KEY
-        generateBase64: true
-      - key: APP_URL
-        value: https://finr-api.onrender.com
-      - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_HOST
-        fromDatabase:
-          name: finr-db
-          property: host
-      - key: DB_PORT
-        value: "5432"
-      - key: DB_DATABASE
-        fromDatabase:
-          name: finr-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: finr-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: finr-db
-          property: password
-      - key: SESSION_DRIVER
-        value: database
-      - key: SESSION_LIFETIME
-        value: "120"
-      - key: CORS_ALLOWED_ORIGINS
-        value: https://finr-app.vercel.app
+1. **Aller sur [vercel.com](https://vercel.com)** et créer un compte
+2. **"Add New..." → "Project"**
+3. **Importer** le repo `FIN-R`
+4. **Root Directory** : `finr-app`
+5. **Ajouter la variable d'environnement :**
+   - `REACT_APP_API_URL` = `https://finr-api.onrender.com/api`
+6. **"Deploy"** et attendre 2-3 minutes
 
-databases:
-  - name: finr-db
-    plan: free
-    databaseName: finr
-    user: finr_user
-```
+### Étape 4 : Tester (1 minute)
 
-3. **Ajouter un fichier `finr-api/init.sql` pour les migrations :**
+- **Frontend** : `https://finr-app.vercel.app`
+- **Backend** : `https://finr-api.onrender.com`
+- **Login** : `engineer@test.com` / `password`
 
-```sql
--- Ce fichier sera exécuté automatiquement par Render
--- Les migrations Laravel seront exécutées via le build command
-```
-
-### Étape 2 : Configurer le frontend React
-
-1. **Mettre à jour `finr-app/src/lib/api.ts` :**
-
-```typescript
-const API_URL = process.env.REACT_APP_API_URL || 'https://finr-api.onrender.com/api';
-
-export const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-});
-```
-
-2. **Créer un fichier `vercel.json` à la racine de `finr-app/` :**
-
-```json
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "framework": "create-react-app",
-  "env": {
-    "REACT_APP_API_URL": "https://finr-api.onrender.com/api"
-  }
-}
-```
-
-### Étape 3 : Déployer sur Render
-
-1. **Créer un compte sur [Render.com](https://render.com)**
-
-2. **Connecter votre compte GitHub :**
-   - Aller dans Settings → GitHub
-   - Autoriser Render à accéder à vos repositories
-
-3. **Déployer le backend :**
-   - Cliquer sur "New +" → "Blueprint"
-   - Sélectionner votre repository `FIN-R`
-   - Render détectera automatiquement le fichier `render.yaml`
-   - Cliquer sur "Apply"
-   - Render va :
-     - Créer la base de données PostgreSQL
-     - Installer les dépendances Composer
-     - Exécuter les migrations
-     - Déployer l'application
-
-4. **Attendre le déploiement** (5-10 minutes)
-
-5. **Récupérer l'URL du backend :**
-   - Elle sera de la forme : `https://finr-api.onrender.com`
-
-### Étape 4 : Déployer le frontend sur Vercel
-
-1. **Créer un compte sur [Vercel.com](https://vercel.com)**
-
-2. **Installer Vercel CLI (optionnel) :**
-
-```bash
-npm i -g vercel
-```
-
-3. **Déployer depuis Vercel Dashboard :**
-   - Cliquer sur "Add New..." → "Project"
-   - Importer votre repository GitHub `FIN-R`
-   - Sélectionner le dossier `finr-app` comme racine du projet
-   - Vercel détectera automatiquement React
-   - Ajouter les variables d'environnement :
-     - `REACT_APP_API_URL` = `https://finr-api.onrender.com/api`
-   - Cliquer sur "Deploy"
-
-4. **Attendre le déploiement** (2-3 minutes)
-
-5. **Récupérer l'URL du frontend :**
-   - Elle sera de la forme : `https://finr-app.vercel.app`
-
-### Étape 5 : Configurer CORS sur le backend
-
-1. **Aller sur Render → finr-api → Environment**
-2. **Ajouter la variable d'environnement :**
-   - Key : `CORS_ALLOWED_ORIGINS`
-   - Value : `https://finr-app.vercel.app`
-
-3. **Redéployer le backend** (Render le fait automatiquement)
-
-### Étape 6 : Tester l'application
-
-1. **Ouvrir le frontend :** `https://finr-app.vercel.app`
-2. **Tester la connexion** avec les comptes de test :
-   - Ingénieur : `engineer@test.com` / `password`
-   - Chercheur : `researcher@test.com` / `password`
+**C'est tout !** 🎉
 
 ### Étape 7 : Configurer un nom de domaine personnalisé (optionnel)
 
