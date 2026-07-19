@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../hooks/useSession';
 import { ReasoningPill } from '../components/shared/Pill';
 import { Avatar } from '../components/shared/Pill';
-import { ReasoningType } from '../types';
+import { ReasoningType, ReasoningPillar, REASONING_PILLARS } from '../types';
 import ReasoningBars from '../components/shared/ReasoningBars';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { ArrowLeft, Clock, Star, Zap, ArrowRight, Loader, Eye } from 'lucide-react';
@@ -45,7 +45,22 @@ const SessionDetail: React.FC = () => {
   const reasoning = session.reasoning || [];
   const events = session.events || [];
 
-  const radarData = reasoning.map((r: any) => ({ subject: r.type, value: r.pct ?? r.percentage ?? 0 }));
+  // Group reasoning by pillars for radar chart
+  const pillarTotals: Record<ReasoningPillar, number> = {
+    'Formel': 0, 'Informel': 0, 'Non formel': 0
+  };
+  reasoning.forEach((r: any) => {
+    const reasoningType = r.type as ReasoningType;
+    Object.entries(REASONING_PILLARS).forEach(([pillar, types]) => {
+      if (types.includes(reasoningType)) {
+        pillarTotals[pillar as ReasoningPillar] += (r.pct ?? r.percentage ?? 0);
+      }
+    });
+  });
+  const radarData = Object.entries(pillarTotals).map(([pillar, value]) => ({
+    subject: pillar,
+    value: Math.min(value, 100)
+  }));
 
   return (
     <div>
@@ -103,19 +118,22 @@ const SessionDetail: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', borderRadius: 'var(--radius)', padding: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
           {reasoning.length > 0
-            ? <ReasoningBars data={reasoning.map((r: any) => ({ type: r.type, pct: r.pct ?? r.percentage ?? 0 }))} title="Raisonnement détecté" />
+            ? <ReasoningBars 
+                data={reasoning.map((r: any) => ({ type: r.type, pct: r.pct ?? r.percentage ?? 0 }))} 
+                title="Raisonnement détecté (détail par type)" 
+              />
             : <p style={{ fontSize: 13, color: 'var(--gray)' }}>Pas encore de données NLP.</p>}
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', borderRadius: 'var(--radius)', padding: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray)', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>Profil cognitif</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray)', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>Profil cognitif (3 piliers)</div>
           {radarData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <RadarChart data={radarData}>
                 <PolarGrid stroke="var(--border)" />
                 <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: 'var(--gray)' }} />
                 <Radar name="Raisonnement" dataKey="value" stroke="var(--purple)" fill="var(--purple)" fillOpacity={0.2} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--border)' }} />
+                <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--border)' }} />
               </RadarChart>
             </ResponsiveContainer>
           ) : <p style={{ fontSize: 13, color: 'var(--gray)', textAlign: 'center', paddingTop: 40 }}>Données insuffisantes</p>}

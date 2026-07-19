@@ -1,4 +1,29 @@
 export type ReasoningType = 'Analytique' | 'Créatif' | 'Par analogie' | 'Essai-erreur' | 'Systémique';
+export type ReasoningPillar = 'Formel' | 'Informel' | 'Non formel';
+
+export const REASONING_PILLARS: Record<ReasoningPillar, ReasoningType[]> = {
+  'Formel': ['Analytique', 'Systémique'],
+  'Informel': ['Essai-erreur', 'Par analogie'],
+  'Non formel': ['Créatif'],
+};
+
+export const REASONING_PILLAR_COLORS: Record<ReasoningPillar, string> = {
+  'Formel': '#7F77DD',
+  'Informel': '#EF9F27',
+  'Non formel': '#1D9E75',
+};
+
+export const REASONING_PILLAR_BG_COLORS: Record<ReasoningPillar, string> = {
+  'Formel': '#EEEDFE',
+  'Informel': '#FAEEDA',
+  'Non formel': '#E1F5EE',
+};
+
+export const REASONING_PILLAR_TEXT_COLORS: Record<ReasoningPillar, string> = {
+  'Formel': '#3C3489',
+  'Informel': '#633806',
+  'Non formel': '#0F6E56',
+};
 
 export interface Engineer {
   id: string | number;

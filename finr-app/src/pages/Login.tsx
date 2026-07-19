@@ -167,7 +167,7 @@ const Login: React.FC = () => {
         </div>
 
         <div style={{ marginTop: 48, textAlign: 'center', color: '#B0AECF', fontSize: 12 }}>
-          <p>ESP/UCAD · Dakar · Juin 2026</p>
+          <p>ISFAD - RDI</p>
           <p style={{ marginTop: 4, fontSize: 11 }}>Plateforme d'analyse du raisonnement en STEAM</p>
         </div>
       </div>

@@ -1,11 +1,11 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, LineChart, Line, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, LineChart, Line, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useSessions } from '../hooks/useSessions';
 import { reasoningColors } from '../data/mockData';
-import { ReasoningType } from '../types';
+import { ReasoningType, ReasoningPillar, REASONING_PILLARS, REASONING_PILLAR_COLORS } from '../types';
 import { Loader } from 'lucide-react';
 
-const REASONING_TYPES: ReasoningType[] = ['Analytique', 'Créatif', 'Par analogie', 'Essai-erreur', 'Systémique'];
+const PILLARS: ReasoningPillar[] = ['Formel', 'Informel', 'Non formel'];
 
 const Stats: React.FC = () => {
   const { sessions, isLoading } = useSessions();
@@ -17,15 +17,24 @@ const Stats: React.FC = () => {
     </div>
   );
 
-  // Compute from real sessions
-  const globalReasoning = REASONING_TYPES.map(type => ({
-    name: type,
-    value: sessions.length === 0 ? 0 : Math.round(
-      sessions.reduce((acc, s) => {
-        const r = (s.reasoning || []).find((r: any) => r.type === type);
-        return acc + (r ? (r.pct ?? r.percentage ?? 0) : 0);
-      }, 0) / sessions.length
-    ),
+  // Compute from real sessions (by pillars)
+  const pillarTotals: Record<ReasoningPillar, number> = {
+    'Formel': 0, 'Informel': 0, 'Non formel': 0
+  };
+
+  sessions.forEach(s => s.reasoning?.forEach((r: any) => {
+    const reasoningType = r.type as ReasoningType;
+    Object.entries(REASONING_PILLARS).forEach(([pillar, types]) => {
+      if (types.includes(reasoningType)) {
+        pillarTotals[pillar as ReasoningPillar] += (r.pct ?? r.percentage ?? 0);
+      }
+    });
+  }));
+
+  const pillarTotal = Object.values(pillarTotals).reduce((a, b) => a + b, 0) || 1;
+  const globalReasoning = PILLARS.map(pillar => ({
+    name: pillar,
+    value: pillarTotal > 0 ? Math.round((pillarTotals[pillar] / pillarTotal) * 100) : 0,
   }));
 
   const creativityOverTime = sessions.map((s, i) => ({
@@ -43,9 +52,11 @@ const Stats: React.FC = () => {
     count,
   }));
 
-  const radarData = REASONING_TYPES.map(type => ({
-    subject: type,
-    value: globalReasoning.find(r => r.name === type)?.value || 0,
+  const radarData = PILLARS.map((pillar, idx) => ({
+    subject: pillar,
+    value: globalReasoning.find(r => r.name === pillar)?.value || 0,
+    key: `radar-${pillar}-${idx}`,
+    fullMark: 100,
   }));
 
   const card = (children: React.ReactNode, title: string) => (
@@ -71,55 +82,63 @@ const Stats: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         {card(
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={globalReasoning} barSize={32}>
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
-              <YAxis hide />
-              <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }} />
-              <Bar dataKey="value" radius={[6,6,0,0]}>
-                {globalReasoning.map(e => <Cell key={e.name} fill={reasoningColors[e.name as ReasoningType] || '#ccc'} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>,
-          'Répartition globale des raisonnements'
+          <div style={{ width: '100%', height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={globalReasoning.length > 0 ? globalReasoning : [{name: 'Aucune donnée', value: 0}]} barSize={32}>
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false } />
+                <YAxis hide />
+                <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }} />
+                <Bar dataKey="value" radius={[6,6,0,0]}>
+                  {(globalReasoning.length > 0 ? globalReasoning : [{name: 'Aucune donnée', value: 0}]).map((e, idx) => <Cell key={`pillar-${e.name}-${idx}`} fill={REASONING_PILLAR_COLORS[e.name as ReasoningPillar] || reasoningColors[e.name as ReasoningType] || '#ccc'} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>,
+          'Répartition globale des raisonnements (3 piliers)'
         )}
 
         {card(
-          <ResponsiveContainer width="100%" height={220}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="var(--border)" />
-              <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#64748B' }} />
-              <Radar name="Groupe" dataKey="value" stroke="var(--purple)" fill="var(--purple)" fillOpacity={0.25} />
-              <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }} />
-            </RadarChart>
-          </ResponsiveContainer>,
-          'Profil cognitif moyen'
+          <div style={{ width: '100%', height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData.length > 0 ? radarData : [{subject: 'Aucune donnée', value: 0, fullMark: 100}]}>
+                <PolarGrid stroke="var(--border)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#64748B' }} />
+                <Radar name="Groupe" dataKey="value" stroke="var(--purple)" fill="var(--purple)" fillOpacity={0.25} />
+                <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>,
+          'Profil cognitif moyen (piliers)'
         )}
 
         {card(
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={creativityOverTime}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }} />
-              <Line type="monotone" dataKey="score" stroke="var(--purple)" strokeWidth={2.5} dot={{ fill: 'var(--purple)', r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>,
+          <div style={{ width: '100%', height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={creativityOverTime.length > 0 ? creativityOverTime : [{name: 'Aucune donnée', score: 0}]}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false } />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false } />
+                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }} />
+                <Line type="monotone" dataKey="score" stroke="var(--purple)" strokeWidth={2.5} dot={{ fill: 'var(--purple)', r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>,
           'Score créativité par session'
         )}
 
         {card(
           eventData.length > 0
-            ? <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={eventData} layout="vertical" barSize={18}>
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 12, fill: '#64748B' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }} />
-                  <Bar dataKey="count" fill="var(--purple-mid)" radius={[0,6,6,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            : <p style={{ fontSize: 13, color: 'var(--gray)', textAlign: 'center', paddingTop: 40 }}>Aucun événement capté</p>,
+            ? <div style={{ width: '100%', height: 220 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={eventData.length > 0 ? eventData : [{name: 'Aucune donnée', count: 0}]} layout="vertical" barSize={18}>
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 12, fill: '#64748B' }} axisLine={false} tickLine={false } />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }} />
+                    <Bar dataKey="count" fill="var(--purple-mid)" radius={[0,6,6,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            : <p key="no-events" style={{ fontSize: 13, color: 'var(--gray)', textAlign: 'center', paddingTop: 40 }}>Aucun événement capté</p>,
           'Types d\'événements captés'
         )}
       </div>
@@ -136,13 +155,13 @@ const Stats: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {sessions.map(s => {
+            {sessions.map((s, idx) => {
               const name = s.engineerName || s.engineer_name || '—';
               const score = s.creativityScore ?? s.creativity_score;
               const dominant = s.dominantReasoning || s.dominant_reasoning;
               const col = dominant ? (reasoningColors[dominant as ReasoningType] || '#ccc') : '#ccc';
               return (
-                <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                <tr key={`session-${s.id}-${idx}`} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, fontSize: 13 }}>{name}</td>
                   <td style={{ fontSize: 13, color: 'var(--gray)', paddingRight: 16 }}>{s.duration || '—'}</td>
                   <td style={{ fontSize: 13, fontWeight: 700, color: 'var(--purple)', paddingRight: 16 }}>{score != null ? `${score}/10` : '—'}</td>

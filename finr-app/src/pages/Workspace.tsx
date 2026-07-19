@@ -2,9 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../hooks/useSession';
 import ReasoningBars from '../components/shared/ReasoningBars';
-import { FlaskConical, Square, Lightbulb, FileText, Grid, List, PlayCircle } from 'lucide-react';
+import { FlaskConical, Square, Lightbulb, FileText, Grid, List, PlayCircle, Mic, MicOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
+
+// Extend Window interface for SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 type Tab = 'notes' | 'schema' | 'etapes' | 'idees';
 
@@ -30,8 +38,77 @@ const Workspace: React.FC = () => {
   const [newIdee, setNewIdee] = useState('');
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastDeltaRef = useRef('');
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-end session when window/tab is closed
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      console.log('beforeunload triggered', { running, status: session?.status });
+      if (running && session?.status === 'active') {
+        e.preventDefault();
+        e.returnValue = 'Une session est en cours. Si vous quittez, la session sera terminée automatiquement.';
+        endSession().catch(() => {});
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [running, session, endSession]);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = true;
+      recognitionInstance.interimResults = true;
+      recognitionInstance.lang = 'fr-FR';
+
+      recognitionInstance.onresult = (event: any) => {
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          }
+        }
+
+        if (finalTranscript) {
+          setNotes(prev => {
+            const newText = prev + ' ' + finalTranscript;
+            handleNotesChange(newText);
+            return newText;
+          });
+        }
+      };
+
+      recognitionInstance.onerror = (event: any) => {
+        console.error('Erreur reconnaissance vocale:', event.error);
+        if (event.error !== 'no-speech') {
+          setIsRecording(false);
+        }
+      };
+
+      recognitionInstance.onend = () => {
+        if (isRecording) {
+          try {
+            recognitionInstance.start();
+          } catch (e) {
+            console.error('Erreur redémarrage reconnaissance:', e);
+            setIsRecording(false);
+          }
+        }
+      };
+
+      setRecognition(recognitionInstance);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync data from session when loaded
   useEffect(() => {
@@ -52,6 +129,25 @@ const Workspace: React.FC = () => {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [running]);
 
+  const toggleRecording = () => {
+    if (!recognition) {
+      alert('La reconnaissance vocale n\'est pas supportée par votre navigateur. Utilisez Chrome ou Edge.');
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
+      setIsRecording(false);
+    } else {
+      try {
+        recognition.start();
+        setIsRecording(true);
+      } catch (e) {
+        console.error('Erreur démarrage reconnaissance:', e);
+        alert('Impossible de démarrer la reconnaissance vocale. Veuillez réessayer.');
+      }
+    }
+  };
 
   const handleNotesChange = (value: string) => {
     setNotes(value);
@@ -233,13 +329,36 @@ const Workspace: React.FC = () => {
           <div style={{ flex: 1, background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(16px)', borderRadius: 14, border: '1px solid var(--border)', padding: 24, display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }}>
             {tab === 'notes' && (
               <>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--dark)', marginBottom: 8 }}>Analyse du problème</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--dark)' }}>Analyse du problème</div>
+                  <button
+                    onClick={toggleRecording}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                      background: isRecording ? 'var(--red-bg)' : 'var(--purple-light)',
+                      color: isRecording ? 'var(--red)' : 'var(--purple)',
+                      border: `1px solid ${isRecording ? 'rgba(220,38,38,0.2)' : '#AFA9EC'}`,
+                      cursor: 'pointer', transition: 'all 0.2s',
+                    }}
+                  >
+                    {isRecording ? <><MicOff size={14} /> Arrêter</> : <><Mic size={14} /> Vocal</>}
+                  </button>
+                </div>
                 <textarea
+                  ref={notesRef}
                   value={notes}
                   onChange={e => handleNotesChange(e.target.value)}
                   style={{ flex: 1, width: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: 14, lineHeight: 1.7, color: 'var(--dark)', fontFamily: 'inherit', minHeight: 260 }}
-                  placeholder="Commencez à noter votre analyse ici..."
+                  placeholder="Commencez à noter votre analyse ici...&#10;&#10;💡 Astuce : Cliquez sur 'Vocal' pour dicter vos notes."
                 />
+                {isRecording && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'var(--red-bg)', borderRadius: 8, border: '1px solid rgba(220,38,38,0.2)', marginTop: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red-mid)', animation: 'pulse 1.5s infinite' }} />
+                    <span style={{ fontSize: 12, color: 'var(--red)', fontWeight: 600 }}>Enregistrement en cours...</span>
+                    <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+                  </div>
+                )}
               </>
             )}
             {tab === 'schema' && (
@@ -361,4 +480,3 @@ const Workspace: React.FC = () => {
 };
 
 export default Workspace;
-

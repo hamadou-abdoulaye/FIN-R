@@ -7,7 +7,7 @@ import MetricCard from '../components/dashboard/MetricCard';
 import SessionList from '../components/dashboard/SessionList';
 import ReasoningBars from '../components/shared/ReasoningBars';
 import { MetricCardSkeleton, ChartSkeleton, TableSkeleton } from '../components/Skeleton';
-import { ReasoningType } from '../types';
+import { ReasoningType, ReasoningPillar, REASONING_PILLARS } from '../types';
 import { PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,24 +38,57 @@ const Dashboard: React.FC = () => {
     });
   }, [sessions]);
 
-  // Reasoning distribution from real sessions
+  // Reasoning distribution from real sessions (by pillars)
   const reasoningDist = React.useMemo(() => {
     if (stats?.reasoning_distribution) {
-      return stats.reasoning_distribution.map((r: any) => ({
-        type: r.type as ReasoningType,
-        pct: Math.round(r.avg_pct),
-      }));
+      const totals: Record<string, number> = {};
+      stats.reasoning_distribution.forEach((r: any) => {
+        totals[r.type] = (totals[r.type] || 0) + r.avg_pct;
+      });
+      
+      const pillarTotals: Record<ReasoningPillar, number> = {
+        'Formel': 0, 'Informel': 0, 'Non formel': 0
+      };
+      
+      Object.entries(totals).forEach(([type, pct]) => {
+        const reasoningType = type as ReasoningType;
+        Object.entries(REASONING_PILLARS).forEach(([pillar, types]) => {
+          if (types.includes(reasoningType)) {
+            pillarTotals[pillar as ReasoningPillar] += pct as number;
+          }
+        });
+      });
+      
+      const total = Object.values(pillarTotals).reduce((a, b) => a + b, 0) || 1;
+      return Object.entries(pillarTotals)
+        .filter(([_, v]) => v > 0)
+        .map(([pillar, v]) => ({
+          type: pillar as ReasoningPillar,
+          pct: Math.round((v / total) * 100),
+        })).sort((a, b) => b.pct - a.pct);
     }
+    
     // Fallback: compute from sessions
-    const totals: Record<string, number> = {};
+    const pillarTotals: Record<ReasoningPillar, number> = {
+      'Formel': 0, 'Informel': 0, 'Non formel': 0
+    };
+    
     sessions.forEach(s => s.reasoning?.forEach((r: any) => {
-      totals[r.type] = (totals[r.type] || 0) + r.pct;
+      const reasoningType = r.type as ReasoningType;
+      Object.entries(REASONING_PILLARS).forEach(([pillar, types]) => {
+        if (types.includes(reasoningType)) {
+          pillarTotals[pillar as ReasoningPillar] += (r.pct ?? r.percentage ?? 0);
+        }
+      });
     }));
-    const total = Object.values(totals).reduce((a, b) => a + b, 0) || 1;
-    return Object.entries(totals).map(([type, v]) => ({
-      type: type as ReasoningType,
-      pct: Math.round((v / total) * 100),
-    })).sort((a, b) => b.pct - a.pct);
+    
+    const total = Object.values(pillarTotals).reduce((a, b) => a + b, 0) || 1;
+    return Object.entries(pillarTotals)
+      .filter(([_, v]) => v > 0)
+      .map(([pillar, v]) => ({
+        type: pillar as ReasoningPillar,
+        pct: Math.round((v / total) * 100),
+      })).sort((a, b) => b.pct - a.pct);
   }, [sessions, stats]);
 
   const dominantReasoning = reasoningDist[0]?.type || '—';
@@ -109,10 +142,11 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)', borderRadius: 'var(--radius)', padding: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
-          {reasoningDist.length > 0
-            ? <ReasoningBars data={reasoningDist} title="Répartition des raisonnements" />
-            : <p style={{ fontSize: 13, color: 'var(--gray)', textAlign: 'center', marginTop: 40 }}>Aucune donnée disponible</p>
-          }
+          {reasoningDist.length > 0 ? (
+            <ReasoningBars data={reasoningDist} title="Répartition des raisonnements" groupByPillars={true} />
+          ) : (
+            <p style={{ fontSize: 13, color: 'var(--gray)', textAlign: 'center', marginTop: 40 }}>Aucune donnée disponible</p>
+          )}
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)', borderRadius: 'var(--radius)', padding: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>

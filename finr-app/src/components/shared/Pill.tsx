@@ -1,15 +1,15 @@
 import React from 'react';
 import { reasoningBgColors, reasoningTextColors } from '../../data/mockData';
-import { ReasoningType } from '../../types';
+import { ReasoningType, ReasoningPillar, REASONING_PILLAR_BG_COLORS, REASONING_PILLAR_TEXT_COLORS } from '../../types';
 
 interface PillProps {
-  type: ReasoningType;
+  type: ReasoningType | ReasoningPillar;
   size?: 'sm' | 'md';
 }
 
 export const ReasoningPill: React.FC<PillProps> = ({ type, size = 'md' }) => {
-  const bg = reasoningBgColors[type] || '#f0f0f0';
-  const color = reasoningTextColors[type] || '#333';
+  const bg = REASONING_PILLAR_BG_COLORS[type as ReasoningPillar] || reasoningBgColors[type as ReasoningType] || '#f0f0f0';
+  const color = REASONING_PILLAR_TEXT_COLORS[type as ReasoningPillar] || reasoningTextColors[type as ReasoningType] || '#333';
   return (
     <span style={{
       display: 'inline-block',
