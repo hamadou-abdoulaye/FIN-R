@@ -238,6 +238,106 @@ php artisan view:cache
 
 ## 🚢 Déploiement sur hébergeur en ligne
 
+### Option 0 : Hébergement GRATUIT (pour tests et démonstration)
+
+#### 🎯 Meilleure option : Render + Vercel/Netlify
+
+**Backend Laravel sur Render (Gratuit)**
+- **Limites** : 512 MB RAM, 100 GB bandwidth/mois, base de données PostgreSQL 90 jours gratuits
+- **Avantages** : SSL automatique, déploiement Git automatique, PHP 8.2 supporté
+- **Inconvénients** : Base de données gratuite limitée dans le temps
+
+**Frontend React sur Vercel ou Netlify (Gratuit)**
+- **Limites** : 100 GB bandwidth/mois, illimité pour les projets personnels
+- **Avantages** : CDN mondial, SSL automatique, déploiement Git automatique
+- **Parfait pour** : Le build statique React
+
+**Étapes de déploiement gratuit :**
+
+1. **Backend sur Render :**
+
+```bash
+# 1. Créer un compte sur render.com
+# 2. Créer un nouveau "Web Service"
+# 3. Connecter votre repo GitHub : hamadou-abdoulaye/FIN-R
+# 4. Configuration :
+#    - Runtime : PHP
+#    - Build Command : composer install --no-dev --optimize-autoloader
+#    - Start Command : vendor/bin/heroku-php-nginx public/
+#    - Plan : Free
+```
+
+5. **Ajouter une base de données PostgreSQL sur Render :**
+   - Créer un "PostgreSQL" dans Render
+   - Noter les credentials (host, port, database, username, password)
+
+6. **Configurer les variables d'environnement dans Render :**
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=base64:GENERATED_KEY
+APP_URL=https://votre-app.onrender.com
+
+DB_CONNECTION=pgsql
+DB_HOST=votre-db.onrender.com
+DB_PORT=5432
+DB_DATABASE=nom_db
+DB_USERNAME=utilisateur
+DB_PASSWORD=mot_de_passe
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+```
+
+7. **Frontend sur Vercel :**
+
+```bash
+# 1. Créer un compte sur vercel.com
+# 2. Importer le projet finr-app
+# 3. Vercel détecte automatiquement React
+# 4. Ajouter les variables d'environnement :
+REACT_APP_API_URL=https://votre-app.onrender.com/api
+REACT_APP_REVERB_KEY=your-key
+REACT_APP_REVERB_HOST=localhost
+REACT_APP_REVERB_PORT=8080
+# 5. Déployer
+```
+
+**Résultat** :
+- Frontend : `https://finr-app.vercel.app`
+- Backend : `https://finr-api.onrender.com`
+- Base de données : PostgreSQL sur Render (gratuit 90 jours)
+
+#### Alternative : Fly.io (Gratuit pour petits projets)
+
+```bash
+# 1. Installer Fly CLI
+curl -L https://fly.io/install.sh | sh
+
+# 2. Se connecter
+fly auth login
+
+# 3. Lancer l'application
+cd finr-api
+fly launch
+```
+
+Fly.io offre :
+- 3 VMs partagées gratuites
+- 160 GB bandwidth/mois
+- PostgreSQL gratuit (3GB stockage)
+
+#### Alternative : Railway (Gratuit avec crédits)
+
+```bash
+# 1. Créer un compte sur railway.app
+# 2. Connecter GitHub
+# 3. Déployer finr-api et finr-nlp
+# 4. Ajouter PostgreSQL
+```
+
+Railway offre 5$ de crédit gratuit/mois (suffisant pour un petit projet).
+
 ### Option 1 : Hébergement mutualisé (OVH, Hostinger, etc.)
 
 #### Backend Laravel
