@@ -17,23 +17,15 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: finr-db
-          property: host
+        value: aiven-db-host.aivencloud.com
       - key: DB_PORT
         value: "5432"
       - key: DB_DATABASE
-        fromDatabase:
-          name: finr-db
-          property: database
+        value: finr_db
       - key: DB_USERNAME
-        fromDatabase:
-          name: finr-db
-          property: user
+        value: avnadmin
       - key: DB_PASSWORD
-        fromDatabase:
-          name: finr-db
-          property: password
+        value: YOUR_AIVEN_PASSWORD
       - key: SESSION_DRIVER
         value: database
       - key: SESSION_LIFETIME
@@ -42,9 +34,3 @@ services:
         value: https://finr-app.vercel.app
       - key: JWT_SECRET
         generateValue: true
-
-databases:
-  - name: finr-db
-    plan: free
-    databaseName: finr
-    user: finr_user
