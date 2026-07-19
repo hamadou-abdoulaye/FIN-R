@@ -275,9 +275,9 @@ mysqldump -u root -p finr > finr_backup.sql
 
 Le Service URI est au format : `mysql://UTILISATEUR:MOT_DE_PASSE@HOST:PORT/BASE_DE_DONNÉES`
 
-**Exemple avec VOTRE Service URI :**
-- Service URI : `mysql://avnadmin:VOTRE_MOT_DE_PASSE@mysql-22a2772f-esp-2026.b.aivencloud.com:10330/defaultdb?ssl-mode=REQUIRED`
-- **Host** : `mysql-22a2772f-esp-2026.b.aivencloud.com` (partie entre `@` et `:`)
+**Exemple avec un Service URI générique :**
+- Service URI : `mysql://avnadmin:VOTRE_MOT_DE_PASSE@mysql-XXXXXXX.aivencloud.com:10330/defaultdb?ssl-mode=REQUIRED`
+- **Host** : `mysql-XXXXXXX.aivencloud.com` (partie entre `@` et `:`)
 - **Port** : `10330`
 - **Database** : `defaultdb`
 - **Username** : `avnadmin`
@@ -287,11 +287,11 @@ Le Service URI est au format : `mysql://UTILISATEUR:MOT_DE_PASSE@HOST:PORT/BASE_
 
 ```bash
 # AVEC VOTRE VRAI HOST (pas le Service URI complet !)
-# Exemple avec votre host :
-mysql -h mysql-22a2772f-esp-2026.b.aivencloud.com -u avnadmin -p finr_db < finr_backup.sql
+# Remplacez les valeurs par les vôtres :
+mysql -h VOTRE_HOST -u avnadmin -p finr_db < finr_backup.sql
 
 # Si le port n'est pas 3306, ajoutez -P :
-mysql -h mysql-22a2772f-esp-2026.b.aivencloud.com -P 10330 -u avnadmin -p finr_db < finr_backup.sql
+mysql -h VOTRE_HOST -P 10330 -u avnadmin -p finr_db < finr_backup.sql
 ```
 
 4. **Vérifier l'importation :**
