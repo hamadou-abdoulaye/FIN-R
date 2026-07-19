@@ -240,17 +240,17 @@ php artisan view:cache
 
 ### Option 0 : Hébergement GRATUIT (pour tests et démonstration)
 
-#### 🎯 Meilleure option : Render + Vercel
+#### 🎯 Meilleure option : Render + Vercel + Aiven
 
 **Stack recommandée :**
 - **Backend** : Laravel sur Render (Gratuit)
 - **Frontend** : React sur Vercel (Gratuit)
-- **Base de données** : PostgreSQL sur Render (Gratuit 90 jours)
+- **Base de données** : PostgreSQL sur Aiven (Gratuit pour toujours)
 
 **Limites :**
 - Render Free : 512 MB RAM, 100 GB bandwidth/mois, mise en veille après 15 min d'inactivité
 - Vercel Free : 100 GB bandwidth/mois, illimité pour projets personnels
-- PostgreSQL : Gratuit 90 jours, puis 7$/mois
+- Aiven Free : 500 MB stockage, 10 connexions simultanées, gratuit pour toujours
 
 ---
 
