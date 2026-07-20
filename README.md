@@ -310,9 +310,23 @@ mysql -h VOTRE_HOST -P 10330 -u avnadmin -p finr_db < finr_backup.sql
 3. **Connecter votre repo GitHub** : `hamadou-abdoulaye/FIN-R`
 4. **Configurer :**
    - **Name** : `finr-api`
-   - **Runtime** : `PHP` (IMPORTANT : Choisir PHP dans la liste, pas Python !)
+   - **Runtime** : Sélectionner **PHP** dans la liste déroulante (IMPORTANT : Render peut auto-détecter Python, vous DEVEZ choisir PHP manuellement !)
    - **Build Command** : `cd finr-api && composer install --no-dev --optimize-autoloader`
    - **Start Command** : `cd finr-api && vendor/bin/heroku-php-nginx public/`
+
+**⚠️ IMPORTANT :** Si Render affiche "Using Python version..." dans les logs, c'est que Render a auto-détecté Python à cause du dossier `finr-nlp/`. 
+
+**Pour corriger cela :**
+
+1. **Dans Render Dashboard, allez dans votre service `finr-api`**
+2. **Cliquez sur "Settings" (Paramètres)**
+3. **Dans la section "Build & Deploy" :**
+   - Trouvez "Runtime"
+   - Changez de "Python" vers **"PHP"** dans la liste déroulante
+   - Sauvegardez
+4. **Redéployez le service** (cliquez sur "Manual Deploy" → "Deploy latest commit")
+
+**Alternative :** Si vous ne trouvez pas l'option Runtime, supprimez le service et recréez-le en suivant exactement les étapes ci-dessus.
 5. **Ajouter les variables d'environnement :**
 
 ```env
