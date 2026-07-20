@@ -311,7 +311,7 @@ mysql -h VOTRE_HOST -P 10330 -u avnadmin -p finr_db < finr_backup.sql
 4. **Configurer :**
    - **Name** : `finr-api`
    - **Build Command** : `cd finr-api && composer install --no-dev --optimize-autoloader && php artisan key:generate && php artisan migrate --force`
-   - **Publish Directory** : `finr-api/public`
+   - **Publish Directory** : `./finr-api/public`
 5. **Ajouter les variables d'environnement :**
 
 ```env
