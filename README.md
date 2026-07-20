@@ -356,16 +356,43 @@ Si Solution 1 ne fonctionne pas, modifiez le Build Command dans Render :
    - **Start Command** : `cd finr-api && vendor/bin/heroku-php-nginx public/`
 4. **Sauvegardez et redéployez**
 
-**Note :** Si Render continue d'utiliser Python même après avoir supprimé `finr-nlp/`, vous devez **supprimer et recréer le service** :
+**Note :** Si vous ne voyez pas PHP dans la liste des runtimes sur Render, c'est que Render a changé son interface et ne propose plus PHP pour les nouveaux comptes. Dans ce cas, utilisez **Railway.app** à la place (voir Alternative ci-dessous).
 
-1. **Dans Render Dashboard, allez dans votre service `finr-api`**
-2. **Cliquez sur "Settings" (Paramètres)**
-3. **Descendez tout en bas et cliquez sur "Delete Service"**
-4. **Confirmez la suppression**
-5. **Recréez le service en suivant les étapes ci-dessus** (New + → Web Service)
-6. **Cette fois, sélectionnez PHP dans la liste des runtimes lors de la création**
+### 🚂 Alternative : Railway.app (si PHP n'est pas disponible sur Render)
 
-Render va maintenant correctement détecter PHP.
+Railway.app est une excellente alternative qui supporte PHP et offre un crédit gratuit de 5$/mois.
+
+**Étape 1 : Créer un compte sur Railway**
+1. Aller sur [railway.app](https://railway.app)
+2. Créer un compte avec GitHub
+
+**Étape 2 : Déployer le backend**
+1. Cliquer sur "New Project"
+2. Sélectionner "Deploy from GitHub repo"
+3. Choisir le repo `FIN-R`
+4. Dans les paramètres du service :
+   - **Root Directory** : `finr-api`
+   - **Build Command** : `composer install --no-dev --optimize-autoloader`
+   - **Start Command** : `php artisan serve --host=0.0.0.0 --port=$PORT`
+5. Ajouter les variables d'environnement (mêmes variables que Render)
+6. Déployer
+
+**Étape 3 : Ajouter une base de données MySQL**
+1. Dans Railway, cliquer sur "New" → "Database" → "MySQL"
+2. Railway va créer une base MySQL et fournir les credentials
+3. Mettre à jour les variables d'environnement du backend avec les nouveaux credentials
+4. Exécuter les migrations
+
+**Avantages de Railway :**
+- Support PHP natif
+- 5$ de crédit gratuit par mois
+- Déploiement automatique depuis GitHub
+- Base de données MySQL incluse
+- SSL automatique
+
+**Inconvénients :**
+- Crédit limité (suffisant pour un petit projet)
+- Peut nécessiter une carte bancaire pour vérification
 5. **Ajouter les variables d'environnement :**
 
 ```env
