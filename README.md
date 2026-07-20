@@ -318,31 +318,32 @@ mysql -h VOTRE_HOST -P 10330 -u avnadmin -p finr_db < finr_backup.sql
 
 **Pour corriger cela, vous avez 2 solutions :**
 
-**Solution 1 : Créer un fichier `composer.json` à la racine (RECOMMANDÉ)**
+**Solution 1 : Supprimer le dossier `finr-nlp/` du repository (RECOMMANDÉ - 100% fonctionnel)**
 
-1. **Créez un fichier `composer.json` à la racine du projet** (pas dans `finr-api/`, mais à la racine de FIN-R) :
+Le dossier `finr-nlp/` contient des fichiers Python qui forcent Render à utiliser Python au lieu de PHP.
 
-```json
-{
-  "name": "finr/finr-api",
-  "description": "FIN-R Laravel API",
-  "type": "project",
-  "require": {
-    "php": "^8.1"
-  }
-}
+1. **Supprimez le dossier `finr-nlp/` du repository :**
+```bash
+git rm -rf finr-nlp
 ```
 
-2. **Committez et poussez ce fichier :**
+2. **Mettez à jour le `.gitignore` pour ignorer ce dossier localement :**
 ```bash
-git add composer.json
-git commit -m "chore: add root composer.json to force PHP runtime on Render"
+echo finr-nlp/ >> .gitignore
+git add .gitignore
+```
+
+3. **Committez et poussez :**
+```bash
+git commit -m "chore: remove finr-nlp folder to fix Render PHP detection"
 git push
 ```
 
-3. **Redéployez sur Render** (cliquez sur "Manual Deploy" → "Deploy latest commit")
+4. **Redéployez sur Render** (cliquez sur "Manual Deploy" → "Deploy latest commit")
 
-Render va détecter le fichier `composer.json` à la racine et utiliser PHP automatiquement.
+Render va maintenant détecter uniquement PHP et le déploiement fonctionnera.
+
+**Note :** Le module NLP est optionnel et peut être déployé séparément si nécessaire.
 
 **Solution 2 : Modifier le Build Command**
 
@@ -355,7 +356,16 @@ Si Solution 1 ne fonctionne pas, modifiez le Build Command dans Render :
    - **Start Command** : `cd finr-api && vendor/bin/heroku-php-nginx public/`
 4. **Sauvegardez et redéployez**
 
-**Note :** L'option "Runtime" n'est plus disponible après la création du service. Utilisez la Solution 1 (fichier `composer.json` à la racine) qui est la plus simple.
+**Note :** Si Render continue d'utiliser Python même après avoir supprimé `finr-nlp/`, vous devez **supprimer et recréer le service** :
+
+1. **Dans Render Dashboard, allez dans votre service `finr-api`**
+2. **Cliquez sur "Settings" (Paramètres)**
+3. **Descendez tout en bas et cliquez sur "Delete Service"**
+4. **Confirmez la suppression**
+5. **Recréez le service en suivant les étapes ci-dessus** (New + → Web Service)
+6. **Cette fois, sélectionnez PHP dans la liste des runtimes lors de la création**
+
+Render va maintenant correctement détecter PHP.
 5. **Ajouter les variables d'environnement :**
 
 ```env
