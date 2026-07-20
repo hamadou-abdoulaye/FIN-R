@@ -316,17 +316,46 @@ mysql -h VOTRE_HOST -P 10330 -u avnadmin -p finr_db < finr_backup.sql
 
 **⚠️ IMPORTANT :** Si Render affiche "Using Python version..." dans les logs, c'est que Render a auto-détecté Python à cause du dossier `finr-nlp/`. 
 
-**Pour corriger cela :**
+**Pour corriger cela, vous avez 2 solutions :**
+
+**Solution 1 : Créer un fichier `composer.json` à la racine (RECOMMANDÉ)**
+
+1. **Créez un fichier `composer.json` à la racine du projet** (pas dans `finr-api/`, mais à la racine de FIN-R) :
+
+```json
+{
+  "name": "finr/finr-api",
+  "description": "FIN-R Laravel API",
+  "type": "project",
+  "require": {
+    "php": "^8.1"
+  }
+}
+```
+
+2. **Committez et poussez ce fichier :**
+```bash
+git add composer.json
+git commit -m "chore: add root composer.json to force PHP runtime on Render"
+git push
+```
+
+3. **Redéployez sur Render** (cliquez sur "Manual Deploy" → "Deploy latest commit")
+
+Render va détecter le fichier `composer.json` à la racine et utiliser PHP automatiquement.
+
+**Solution 2 : Modifier le Build Command**
+
+Si Solution 1 ne fonctionne pas, modifiez le Build Command dans Render :
 
 1. **Dans Render Dashboard, allez dans votre service `finr-api`**
 2. **Cliquez sur "Settings" (Paramètres)**
 3. **Dans la section "Build & Deploy" :**
-   - Trouvez "Runtime"
-   - Changez de "Python" vers **"PHP"** dans la liste déroulante
-   - Sauvegardez
-4. **Redéployez le service** (cliquez sur "Manual Deploy" → "Deploy latest commit")
+   - **Build Command** : Remplacez par `cd finr-api && composer install --no-dev --optimize-autoloader && php artisan key:generate && php artisan migrate --force`
+   - **Start Command** : `cd finr-api && vendor/bin/heroku-php-nginx public/`
+4. **Sauvegardez et redéployez**
 
-**Alternative :** Si vous ne trouvez pas l'option Runtime, supprimez le service et recréez-le en suivant exactement les étapes ci-dessus.
+**Note :** L'option "Runtime" n'est plus disponible après la création du service. Utilisez la Solution 1 (fichier `composer.json` à la racine) qui est la plus simple.
 5. **Ajouter les variables d'environnement :**
 
 ```env
