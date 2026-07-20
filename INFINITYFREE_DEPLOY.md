@@ -189,22 +189,50 @@ Si vous voyez une erreur 500 :
 - Vérifier que le fichier `.env` est correctement configuré
 - Vérifier que la base de données est accessible
 
-## 🚀 Étape 10 : Déployer le frontend sur Vercel
+## 🚀 Étape 10 : Intégrer le frontend dans le backend (SUR LE MÊME HÉBERGEUR)
 
-1. Aller sur [vercel.com](https://vercel.com) et créer un compte
-2. Cliquer sur **"Add New..." → "Project"**
-3. Importer le repo `FIN-R`
-4. **Root Directory** : `finr-app`
-5. **Ajouter la variable d'environnement :**
-   - `REACT_APP_API_URL` = `https://finr-api.infinityfreeapp.com/api`
-6. Cliquer sur **"Deploy"**
-7. Attendre 2-3 minutes
+Pour avoir **une seule URL** pour toute l'application, nous allons intégrer le frontend React dans le backend Laravel.
+
+### Option A : Déploiement local (RECOMMANDÉ)
+
+1. **Exécuter le script de build :**
+   ```bash
+   # Windows
+   build-frontend.bat
+   
+   # Ou manuellement :
+   cd finr-app
+   npm install --legacy-peer-deps
+   npm run build
+   cd ..
+   xcopy /E /I /Y finr-app\build\* finr-api\public\
+   ```
+
+2. **Vérifier que les fichiers React sont dans `finr-api/public/` :**
+   - `finr-api/public/index.html`
+   - `finr-api/public/static/`
+   - `finr-api/public/assets/`
+
+3. **Créer le ZIP du backend avec le frontend intégré :**
+   - Compresser tous les fichiers de `finr-api/` en `finr-backend.zip`
+   - Ce ZIP contient maintenant le backend ET le frontend
+
+### Option B : Déploiement direct sur InfinityFree
+
+1. **Uploader `finr-backend.zip` sur InfinityFree** (voir Étape 6)
+2. **Le frontend sera automatiquement accessible** via l'URL du backend
+
+**Avantage :** Une seule URL pour toute l'application !
+- Frontend + Backend : `https://finr-api.infinityfreeapp.com`
+- API : `https://finr-api.infinityfreeapp.com/api`
 
 ## 🚀 Étape 11 : Tester l'application complète
 
-1. **Frontend** : `https://finr-app.vercel.app`
-2. **Backend** : `https://finr-api.infinityfreeapp.com`
+1. **Application complète** : `https://finr-api.infinityfreeapp.com`
+2. **API** : `https://finr-api.infinityfreeapp.com/api`
 3. **Login** : `engineer@test.com` / `password`
+
+**Note :** Le frontend et le backend sont maintenant sur le même hébergeur, accessibles via une seule URL !
 
 ## 🔧 Dépannage
 

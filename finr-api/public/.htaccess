@@ -14,7 +14,14 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send Requests To Front Controller...
+    # Serve React frontend for all non-API routes
+    RewriteCond %{REQUEST_URI} !^/api
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.html [L]
+
+    # Send API Requests To Laravel Front Controller...
+    RewriteCond %{REQUEST_URI} ^/api
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
