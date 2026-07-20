@@ -306,12 +306,13 @@ mysql -h VOTRE_HOST -P 10330 -u avnadmin -p finr_db < finr_backup.sql
 ### Étape 2 : Déployer le backend sur Render (5 minutes)
 
 1. **Aller sur [render.com](https://render.com)** et créer un compte
-2. **"New +" → "Static Site"**
+2. **"New +" → "Web Service"** (pas "Static Site" !)
 3. **Connecter votre repo GitHub** : `hamadou-abdoulaye/FIN-R`
 4. **Configurer :**
    - **Name** : `finr-api`
-   - **Build Command** : `cd finr-api && composer install --no-dev --optimize-autoloader && php artisan key:generate && php artisan migrate --force`
-   - **Publish Directory** : `./finr-api/public`
+   - **Runtime** : `PHP`
+   - **Build Command** : `cd finr-api && composer install --no-dev --optimize-autoloader`
+   - **Start Command** : `cd finr-api && vendor/bin/heroku-php-nginx public/`
 5. **Ajouter les variables d'environnement :**
 
 ```env
