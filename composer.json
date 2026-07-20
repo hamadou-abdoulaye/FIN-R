@@ -1,0 +1,8 @@
+{
+  "name": "finr/finr-api",
+  "description": "FIN-R Laravel API",
+  "type": "project",
+  "require": {
+    "php": "^8.1"
+  }
+}
