@@ -1,8 +1,8 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:vercel",
   "outputDirectory": "build",
   "framework": "create-react-app",
   "env": {
-    "REACT_APP_API_URL": "https://finr-api.onrender.com/api"
+    "REACT_APP_API_URL": "https://finr-api.infinityfreeapp.com/api"
   }
 }
