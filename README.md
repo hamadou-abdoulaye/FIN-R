@@ -310,7 +310,7 @@ mysql -h VOTRE_HOST -P 10330 -u avnadmin -p finr_db < finr_backup.sql
 3. **Connecter votre repo GitHub** : `hamadou-abdoulaye/FIN-R`
 4. **Configurer :**
    - **Name** : `finr-api`
-   - **Runtime** : `PHP`
+   - **Runtime** : `PHP` (IMPORTANT : Choisir PHP dans la liste, pas Python !)
    - **Build Command** : `cd finr-api && composer install --no-dev --optimize-autoloader`
    - **Start Command** : `cd finr-api && vendor/bin/heroku-php-nginx public/`
 5. **Ajouter les variables d'environnement :**
