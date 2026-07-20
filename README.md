@@ -313,18 +313,29 @@ mysql -h VOTRE_HOST -P 10330 -u avnadmin -p finr_db < finr_backup.sql
    - **Build Command** : `cd finr-api && composer install --no-dev --optimize-autoloader && php artisan key:generate && php artisan migrate --force`
    - **Publish Directory** : `finr-api/public`
 5. **Ajouter les variables d'environnement :**
-   - `APP_ENV` = `production`
-   - `APP_DEBUG` = `false`
-   - `APP_KEY` = (générer avec `php artisan key:generate --show` en local)
-   - `APP_URL` = `https://finr-api.onrender.com`
-   - `DB_CONNECTION` = `mysql`
-   - `DB_HOST` = (host depuis Aiven)
-   - `DB_PORT` = `3306`
-   - `DB_DATABASE` = `finr_db`
-   - `DB_USERNAME` = `avnadmin`
-   - `DB_PASSWORD` = (password depuis Aiven)
-   - `SESSION_DRIVER` = `database`
-   - `CORS_ALLOWED_ORIGINS` = `https://finr-app.vercel.app`
+
+```env
+APP_ENV = production
+APP_DEBUG = false
+APP_KEY = base64:VOTRE_CLE_ICI
+APP_URL = https://finr-api.onrender.com
+
+DB_CONNECTION = mysql
+DB_HOST = mysql-22a2772f-esp-2026.b.aivencloud.com
+DB_PORT = 10330
+DB_DATABASE = defaultdb
+DB_USERNAME = avnadmin
+DB_PASSWORD = VOTRE_MOT_DE_PASSE_AIVEN
+
+SESSION_DRIVER = database
+SESSION_LIFETIME = 120
+CORS_ALLOWED_ORIGINS = https://finr-app.vercel.app
+```
+
+**Note** : 
+- Utilisez `defaultdb` comme nom de base de données (ou créez `finr_db` sur Aiven)
+- Le port est `10330` (pas 3306)
+- SSL est requis mais géré automatiquement par Laravel
 6. **"Create Static Site"** et attendre 3-5 minutes
 
 ### Étape 3 : Déployer le frontend sur Vercel (3 minutes)
