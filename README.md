@@ -356,11 +356,134 @@ Si Solution 1 ne fonctionne pas, modifiez le Build Command dans Render :
    - **Start Command** : `cd finr-api && vendor/bin/heroku-php-nginx public/`
 4. **Sauvegardez et redéployez**
 
-**Note :** Si vous ne voyez pas PHP dans la liste des runtimes sur Render, c'est que Render a changé son interface et ne propose plus PHP pour les nouveaux comptes. Dans ce cas, utilisez **Railway.app** à la place (voir Alternative ci-dessous).
+**Note :** Si vous ne voyez pas PHP dans la liste des runtimes sur Render, c'est que Render a changé son interface et ne propose plus PHP pour les nouveaux comptes. Dans ce cas, utilisez **InfinityFree** à la place (voir Alternative ci-dessous).
 
-### 🚂 Alternative : Railway.app (si PHP n'est pas disponible sur Render)
+### 🆓 Alternative 1 : InfinityFree (100% GRATUIT - RECOMMANDÉ)
 
-Railway.app est une excellente alternative qui supporte PHP et offre un crédit gratuit de 5$/mois.
+InfinityFree est un hébergeur web 100% gratuit qui supporte PHP et MySQL, sans carte bancaire requise.
+
+**Étape 1 : Créer un compte sur InfinityFree**
+1. Aller sur [infinityfree.net](https://infinityfree.net)
+2. Cliquer sur "Sign Up" et créer un compte
+3. Vérifier votre email
+
+**Étape 2 : Créer un site web**
+1. Se connecter au panel InfinityFree
+2. Cliquer sur "Create Account" dans la section "Hosting"
+3. Choisir un sous-domaine (ex: `finr-api.infinityfreeapp.com`)
+4. Noter les identifiants MySQL fournis
+
+**Étape 3 : Préparer le backend en local**
+
+```bash
+cd finr-api
+
+# Installer les dépendances en mode production
+composer install --no-dev --optimize-autoloader
+
+# Générer la clé d'application
+php artisan key:generate
+
+# Créer le fichier .env de production
+cp .env.example .env
+# Éditer .env avec les paramètres InfinityFree :
+nano .env
+```
+
+Configuration `.env` pour InfinityFree :
+```env
+APP_NAME="FIN-R"
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=base64:VOTRE_CLE_ICI
+APP_URL=https://finr-api.infinityfreeapp.com
+
+DB_CONNECTION=mysql
+DB_HOST=sqlXXX.infinityfree.com (fourni par InfinityFree)
+DB_PORT=3306
+DB_DATABASE=nom_base_donnees (fourni par InfinityFree)
+DB_USERNAME=utilisateur (fourni par InfinityFree)
+DB_PASSWORD=mot_de_passe (fourni par InfinityFree)
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+
+CORS_ALLOWED_ORIGINS=https://finr-app.vercel.app
+```
+
+**Étape 4 : Optimiser pour la production**
+
+```bash
+# Optimiser Laravel
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Créer un fichier ZIP du backend
+# Compresser tous les fichiers de finr-api/ en finr-api.zip
+```
+
+**Étape 5 : Uploader sur InfinityFree**
+
+1. Dans InfinityFree, aller dans "File Manager"
+2. Naviguer vers le dossier `htdocs/`
+3. Supprimer tous les fichiers par défaut
+4. Uploader le fichier `finr-api.zip`
+5. Extraire le fichier ZIP
+6. Déplacer tous les fichiers dans `htdocs/`
+
+**Étape 6 : Créer la base de données**
+
+1. Dans InfinityFree, aller dans "MySQL Databases"
+2. Créer une nouvelle base de données
+3. Créer un utilisateur MySQL
+4. Noter les credentials
+
+**Étape 7 : Importer les données**
+
+```bash
+# Exporter votre base locale
+mysqldump -u root -p finr > finr_backup.sql
+
+# Importer via phpMyAdmin sur InfinityFree
+# Aller dans phpMyAdmin → Sélectionner la base → Importer → Choisir finr_backup.sql
+```
+
+**Étape 8 : Configurer le .htaccess**
+
+Créer un fichier `.htaccess` dans `htdocs/` :
+
+```apache
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php/$1 [L]
+</IfModule>
+```
+
+**Étape 9 : Tester**
+
+- Backend : `https://finr-api.infinityfreeapp.com`
+- Tester l'API : `https://finr-api.infinityfreeapp.com/api/health`
+
+**Avantages d'InfinityFree :**
+- 100% gratuit, pas de carte bancaire
+- PHP 8.1+ supporté
+- MySQL 5.7+ inclus
+- SSL gratuit (Let's Encrypt)
+- Bande passante illimitée
+- Espace disque illimité
+- Pas de publicité
+
+**Inconvénients :**
+- Mise en veille après 30 min d'inactivité
+- Support limité
+- Performance variable
+
+### 🚂 Alternative 2 : Railway.app (si vous avez une carte bancaire)
+
+Railway.app offre 5$ de crédit gratuit par mois.
 
 **Étape 1 : Créer un compte sur Railway**
 1. Aller sur [railway.app](https://railway.app)
@@ -389,10 +512,11 @@ Railway.app est une excellente alternative qui supporte PHP et offre un crédit 
 - Déploiement automatique depuis GitHub
 - Base de données MySQL incluse
 - SSL automatique
+- Pas de mise en veille
 
 **Inconvénients :**
 - Crédit limité (suffisant pour un petit projet)
-- Peut nécessiter une carte bancaire pour vérification
+- Nécessite une carte bancaire pour vérification
 5. **Ajouter les variables d'environnement :**
 
 ```env
