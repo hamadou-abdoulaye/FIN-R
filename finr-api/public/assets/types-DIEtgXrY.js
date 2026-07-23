@@ -1,1 +1,0 @@
-var e={Formel:[`Analytique`,`Systémique`],Informel:[`Essai-erreur`,`Par analogie`],"Non formel":[`Créatif`]},t={Formel:`#7F77DD`,Informel:`#EF9F27`,"Non formel":`#1D9E75`},n={Formel:`#EEEDFE`,Informel:`#FAEEDA`,"Non formel":`#E1F5EE`},r={Formel:`#3C3489`,Informel:`#633806`,"Non formel":`#0F6E56`};export{r as i,n,t as r,e as t};

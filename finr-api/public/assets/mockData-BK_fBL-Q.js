@@ -1,1 +1,0 @@
-var e={Analytique:`#7F77DD`,Créatif:`#1D9E75`,"Par analogie":`#EF9F27`,"Essai-erreur":`#D85A30`,Systémique:`#378ADD`},t={Analytique:`#EEEDFE`,Créatif:`#E1F5EE`,"Par analogie":`#FAEEDA`,"Essai-erreur":`#FCEBEB`,Systémique:`#E8F0FD`},n={Analytique:`#3C3489`,Créatif:`#0F6E56`,"Par analogie":`#633806`,"Essai-erreur":`#791F1F`,Systémique:`#1A4A8A`};export{e as n,n as r,t};
